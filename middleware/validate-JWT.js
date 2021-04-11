@@ -1,8 +1,11 @@
+require("dotenv").config();
+
 const jwt = require("jsonwebtoken");
 const { UserModel } = require("../models");
 
 const validateJWT = async (req, res, next) => {
   if (req.method == "OPTIONS") {
+    console.log("hello");
     next();
   } else if (
     req.headers.authorization &&
@@ -19,16 +22,16 @@ const validateJWT = async (req, res, next) => {
         )
       : undefined;
 
-    console.log("payload -->", payload);
+      console.log("payload -->", payload);
     if (payload) {
       let foundUser = await UserModel.findOne({ where: { id: payload.id } });
-      console.log("found user -->", foundUser);
+        console.log("found user -->", foundUser);
       if (foundUser) {
-        console.log("request -->", req);
+          console.log("request -->". req);
         req.user = foundUser;
         next();
       } else {
-        res.status(400).send({ message: "Not Authorized" });
+        res.status(400).send({ messagfe: "Not Authorized" });
       }
     } else {
       res.status(401).send({ message: "Invalid token" });
