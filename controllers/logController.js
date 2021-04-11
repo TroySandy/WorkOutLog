@@ -3,9 +3,6 @@ const router = Express.Router();
 const { LogModel } = require("../models");
 const validateJWT = require("../middleware/validate-jwt");
 
-
-
-
 // router.get("/",  (req, res) => {
 //   res.send("this is another test route");
 // });
@@ -46,48 +43,51 @@ router.get("/", validateJWT, async (req, res) => {
   }
 });
 
-router.put("/:id", validateJWT, async (req, res) => {
-  const { description, definition, result } = req.body.log;
+router.get("/:id", validateJWT, async (req, res) => {
   const { id } = req.user;
-  const logId = req.params.id;
+  console.log(id);
+  try {
+    const allLogs = await LogModel.findAll({
+      where: {
+        owner_id: id,
+      },
+    });
+    res.status(200).json(allLogs);
+  } catch (err) {
+    res.status(500).json({ message: "Failed Task" });
+  }
+});
 
-  const query = {
-    where: {
-      id: logId, 
-      owner: id,
-    }
-  };
-
-  const updatedLog = {
-    description,
-    definition,
-    result
-  };
+router.put("/:id", validateJWT, async (req, res) => {
+  const { description, definition, result } = req.body;
 
   try {
-    const update = await LogModel.update(updatedLog, query);
-    res.status(200).json(update);
-  }catch(err){
+    await LogModel.update(
+      { description, definition, result },
+      { where: { id: req.params.id }, returning: true }
+    ).then((result) => {
+      res.status(200).json({
+        message: "Log successfully updated",
+        updatedLog: result,
+      });
+    });
+  } catch (err) {
     res.status(500).json({
-      message: "Failed to update"
-    })
+      message: `Failed to update log: ${err}`,
+    });
   }
-  
 });
 
 router.delete("/:id", validateJWT, async (req, res) => {
-  const id = req.user.id;
-  const logId = req.params.id;
-
+  
   try {
     const query = {
       where: {
-        workoutlog: logId,
-        owner: id,
+        id: req.params.id
       },
     };
     await LogModel.destroy(query);
-    res.status(200).json({ message: "Log destroyed" });
+    res.status(200).json({ message: "Log destroyed"});
   } catch (err) {
     res.status(500).json({ message: "Failed Task" });
   }
